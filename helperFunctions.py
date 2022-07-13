@@ -11,15 +11,7 @@ import base64
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
-#import plotly
-#import plotly.express as px
-#import sys
 
-
-# API KEYS:
-# 1: "819694ca44msh708b06fe0d13023p1f9e22jsnbf233982ed81"
-# 2: "c61492faadmshc01840452466221p1eee96jsn0c7e6a701443"
-# 3: "7f0719a884mshc8f46d9b348ea46p1c1c13jsn3510ca50709c"
 # https://rapidapi.com/elreco/api/call-of-duty-modern-warfare/
 
 
@@ -69,7 +61,7 @@ def getData20Games(platform, gamertag):
     # Make API call
     url = "https://call-of-duty-modern-warfare.p.rapidapi.com/warzone-matches/"+gamertag+"/"+platform
     headers = {
-        "X-RapidAPI-Key": "819694ca44msh708b06fe0d13023p1f9e22jsnbf233982ed81",
+        "X-RapidAPI-Key": "API-KEY",
         "X-RapidAPI-Host": "call-of-duty-modern-warfare.p.rapidapi.com"
     }
     # Sleep 1 second to prevent overload
@@ -180,7 +172,7 @@ def getDataLifetime(platform, gamertag):
     # Make API call
     url = "https://call-of-duty-modern-warfare.p.rapidapi.com/warzone/"+gamertag+"/"+platform
     headers = {
-        "X-RapidAPI-Key": "c61492faadmshc01840452466221p1eee96jsn0c7e6a701443",
+        "X-RapidAPI-Key": "API-KEY",
         "X-RapidAPI-Host": "call-of-duty-modern-warfare.p.rapidapi.com"
     }
     # Sleep 1 second to prevent overload
@@ -248,7 +240,7 @@ def getDataWeekly(platform, gamertag):
     # Make API call
     url = "https://call-of-duty-modern-warfare.p.rapidapi.com/weekly-stats/"+gamertag+"/"+platform
     headers = {
-        "X-RapidAPI-Key": "7f0719a884mshc8f46d9b348ea46p1c1c13jsn3510ca50709c",
+        "X-RapidAPI-Key": "API-KEY",
         "X-RapidAPI-Host": "call-of-duty-modern-warfare.p.rapidapi.com"
     }
     # Sleep 1 second to prevent overload
