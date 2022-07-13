@@ -110,6 +110,6 @@ http://michaelpoma.pythonanywhere.com/?platform=battle&gamertag=kawaguy90%231610
 ## Screenshots
 
 <p align="center">
-  <img alt="Home Page" src="home_page_ss.png" width="45%" display="inline-block">
-  <img alt="Dashboard" src="dashboard_ss.png" width="45%" display="inline-block">
+  <img alt="Home Page" src="home_page_ss.png" width="50%" display="inline-block">
+  <img alt="Dashboard" src="dashboard_ss.png" width="50%" display="inline-block">
 </p>
