@@ -1,0 +1,943 @@
+{% extends 'base.html' %}
+
+{% block head %}
+
+<title>Warzone Statistics</title>
+
+<style>
+
+  /* plotly plots */
+  #plot_container {
+    position: absolute;
+    border: 0px;
+    margin-top: 200px;
+    right: 51%;
+    margin-right: -300px;
+    width: 900px;
+    height: 420px;
+  }
+
+  #plot_container_caption {
+    margin-left: 0px;
+  }
+
+  #plot1, #plot2 {
+    position: absolute;
+    margin-top: -209px;
+    height: 415px;
+    width: 415px;
+    border: 3px solid white;
+    border-radius: 5px;
+    box-shadow: 3px 3px .6em 2px white;
+    background: radial-gradient(#1b1b1b, #121212);
+    background-origin: border-box;
+    background-clip: content-box, border-box;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  #plot1 {
+    margin-left: -10px;
+  }
+
+  #plot2 { 
+    margin-left: 10px;
+  }
+
+</style>
+
+<script src="https://cdn.plot.ly/plotly-2.12.1.min.js"></script>
+
+{% endblock %}
+
+{% block body %}
+<div id="menu_panel">
+  <h1>WARZONE STATISTICS</h1>
+  <h3>Find my Warzone Profile</h3>
+
+  <form method="GET" autocomplete="off">
+
+    <div id="platform_choices">
+      <img id="battle_icon" src="static/battle_final.png" class='icon' name="battle">
+      <img id="psn_icon" src="static/psn_final.png" class='icon' name="psn">
+      <img id="xbl_icon" src="static/xbl_final.png" class='icon' name="xbl">
+      <img id="acti_icon" src="static/acti_final.png" class='icon' name="acti">
+    </div>
+    <br>
+
+    <input id="gamertag" type="text" name="search" placeholder="Select Platform" spellcheck="False" autocomplete="false" disabled>
+    <br>
+    <br>
+    <input type="button" id="submit_button" value="Get Stats">
+
+    <h3 id="error_message" class="hidden">Something went wrong. Try again.</h3>
+
+
+    <p id="error_message_from_flask" class="hidden">{{ error }}<p>
+    <p id="success_message_from_flask" class="hidden">{{ success }}</p>
+
+
+
+  </form>
+</div>
+
+
+<div id="dashboard_panel" class='hidden'>
+  {% if gamertag != None %}
+  <h1 id="dashboard_header">{{ gamertag }}'s Profile</h1>
+  {% endif %}
+
+  {% if success == 'success' %}
+  <p id="data_lifetime" class="hidden">{{ data_lifetime }}</p>
+  <p id="data_weekly" class="hidden">{{ data_weekly }}</p>
+  <p id="data_detailed" class="hidden">{{ data_detailed }}</p>
+
+
+  <!-- lifetime table -->
+  <table id="lifetime_table">
+    <tr>
+      <td><span class="lifetime_title">Wins</span><br><span id="lifetime_wins" class="lifetime_data"></span></td>
+      <td><span class="lifetime_title">Win Percentage</span><br><span id="lifetime_win_percentage" class="lifetime_data"></span></td>
+      <td><span class="lifetime_title">Timed Played</span><br><span id="lifetime_time_played" class="lifetime_data"></span></td>
+    </tr>
+    <tr>
+      <td><span class="lifetime_title">Kills</span><br><span id="lifetime_kills" class="lifetime_data"></span></td>
+      <td><span class="lifetime_title">K/D Ratio</span><br><span id="lifetime_kdratio" class="lifetime_data"></span></td>
+      <td><span class="lifetime_title">Kills Per Game</span><br><span id="lifetime_avgkills" class="lifetime_data"></span></td>
+    </tr>
+    <caption id="lifetime_table_caption">Lifetime Gameplay</caption>
+  </table>
+
+
+
+  <!-- weekly table -->
+  <table id="weekly_table">
+    <tr>
+      <td><span class="weekly_title">Kills</span><br><span id="weekly_kills" class="weekly_data"></span></td>
+      <td><span class="weekly_title">Deaths</span><br><span id="weekly_deaths" class="weekly_data"></span></td>
+      <td><span class="weekly_title">K/D Ratio</span><br><span id="weekly_kdratio" class="weekly_data"></span></td>
+    </tr>
+    <tr>
+      <td><span class="weekly_title">Damage Done</span><br><span id="weekly_damage_done" class="weekly_data"></span></td>
+      <td><span class="weekly_title">Kills Per Game</span><br><span id="weekly_avgkills" class="weekly_data"></span></td>
+      <td><span class="weekly_title">Time Played</span><br><span id="weekly_time_played" class="weekly_data"></span></td>
+    </tr>
+    <caption id="weekly_table_caption">Weekly Gameplay</caption>
+  </table>
+
+
+  <!-- detailed table -->
+  <table id="detailed_table">
+    <tr id="detailed_table_heading">
+      <th class="detailed_title">Place</th>
+      <th class="detailed_title">Kills</th>
+      <th class="detailed_title">Mode</th>
+    </tr>
+    <caption id="detailed_table_caption">Recent Games</caption>
+  </table>
+
+
+  <!-- summary plots -->
+  <table id="plot_container">
+    <tr>
+      <td colspan="1"><div id="plot1"></div></td>
+      <td colspan="1"><div id="plot2"></div></td>
+    </tr>
+    <caption id="plot_container_caption">Detailed Summary</caption>
+  </table>
+
+
+
+
+
+  {% endif %}
+
+
+
+
+
+</div>
+
+
+
+
+
+<script>
+
+  // REFERNCES
+  let menu_panel = document.getElementById('menu_panel');
+  let icons = document.querySelectorAll('.icon');
+  let gamertag = document.getElementById('gamertag');
+  let battle_icon = document.getElementById('battle_icon');
+  let psn_icon = document.getElementById('psn_icon');
+  let xbl_icon = document.getElementById('xbl_icon');
+  let acti_icon = document.getElementById('acti_icon');
+  let submit_button = document.getElementById('submit_button');
+  let inside = 'Select Platform';
+  let error_message = document.getElementById('error_message');
+  let error_message_from_flask = document.getElementById('error_message_from_flask');
+
+
+  /* DASHBOARD REFERENCES */
+  let dashboard_panel = document.getElementById('dashboard_panel');
+  let dashboard_header = document.getElementById('dashboard_header');
+
+  // lifetime
+  let data_lifetime = document.getElementById('data_lifetime');
+  let lifetime_table = document.getElementById('lifetime_table');
+  let lifetime_table_caption = document.getElementById('lifetime_table_caption');
+  let lifetime_wins = document.getElementById('lifetime_wins');
+  let lifetime_win_percentage = document.getElementById('lifetime_win_percentage');
+  let lifetime_time_played = document.getElementById('lifetime_time_played');
+  let lifetime_kills = document.getElementById('lifetime_kills');
+  let lifetime_kdratio = document.getElementById('lifetime_kdratio');
+  let lifetime_avgkills = document.getElementById('lifetime_avgkills');
+
+  // weekly
+  let data_weekly = document.getElementById('data_weekly');
+  let weekly_table = document.getElementById('weekly_table');
+  let weekly_table_caption = document.getElementById('weekly_table_caption');
+  let weekly_kills = document.getElementById('weekly_kills');
+  let weekly_deaths = document.getElementById('weekly_deaths');
+  let weekly_kdratio = document.getElementById('weekly_kdratio');
+  let weekly_damage_done = document.getElementById('weekly_damage_done');
+  let weekly_avgkills = document.getElementById('weekly_avgkills');
+  let weekly_time_played = document.getElementById('weekly_time_played');
+
+  // detailed 
+  let detailed_table = document.getElementById('detailed_table');
+  let detailed_table_heading = document.getElementById('detailed_table_heading');
+  let detailed_table_caption = document.getElementById('detailed_table_caption');
+  let data_detailed_teamPlacement=[]
+  let data_detailed_kills=[]
+  let data_detailed_mode=[]
+  let data_detailed_kdRatio=[]
+  let data_detailed_deaths=[]
+  let data_detailed_longestStreak=[]
+  let data_detailed_percentTimeMoving=[]
+  let data_detailed_playerCount=[]
+
+  // PLOTS
+  let plot_container = document.getElementById('plot_container');
+  let plot_container_caption = document.getElementById('plot_container_caption');
+  let plot1 = document.getElementById('plot1');
+  let plot2 = document.getElementById('plot2');
+
+
+
+
+  /*** DASHBOARD PANEL ***/
+  // if status code is success and data retrieved (platform & gamertag correct)
+  if (success_message_from_flask.innerHTML == 'success') {
+    error_message.classList.add('hidden');
+    menu_panel.classList.add('hidden');
+    dashboard_panel.classList.remove('hidden');
+
+    // function: handle string data and convert back to list of values
+    function stringToList(data) {
+      var string = data.innerHTML.toString()
+      string = string.slice(2,-2)
+      string = string.split(', ')
+      return string
+    }
+
+
+    // BUILD LIFETIME STATS TABLE
+    // 2x3
+    data_lifetime = stringToList(data_lifetime)
+    lifetime_wins.innerHTML = parseInt(data_lifetime[0])
+    lifetime_win_percentage.innerHTML = data_lifetime[1]
+    lifetime_time_played.innerHTML = parseInt(data_lifetime[2]) + ' Days ' + parseInt(data_lifetime[3]) + ' Hours'
+    lifetime_kills.innerHTML = parseInt(data_lifetime[5])
+    lifetime_kdratio.innerHTML = data_lifetime[8]
+    lifetime_avgkills.innerHTML = parseInt(data_lifetime[7])
+
+
+    // build weekly stats dashboard through JS (not HTML)
+    // 2x3
+    data_weekly = stringToList(data_weekly)
+    weekly_kills.innerHTML = parseInt(data_weekly[0])
+    weekly_deaths.innerHTML = parseInt(data_weekly[1])
+    weekly_kdratio.innerHTML = parseFloat(data_weekly[2]).toFixed(2);
+    weekly_damage_done.innerHTML = parseInt(data_weekly[4])
+    weekly_avgkills.innerHTML = parseInt(data_weekly[3])
+    weekly_time_played.innerHTML = parseInt(data_weekly[7]) + ' Hours'
+
+
+    // BUILD WEEKLY / RECENT GAMES TABLE
+    // 20x3 or 10x3
+    // load data into proper lists
+    data_detailed = JSON.parse(data_detailed.innerHTML);
+    for (let i = 0; i < 20; i++) {
+      data_detailed_teamPlacement.push(parseInt(data_detailed['teamPlacement'][i]));
+      data_detailed_kills.push(parseInt(data_detailed['kills'][i]));
+      data_detailed_kdRatio.push(parseFloat(parseFloat(data_detailed['kdRatio'][i]).toFixed(2)));
+      data_detailed_deaths.push(parseInt(data_detailed['deaths'][i]));
+      data_detailed_longestStreak.push(parseInt(data_detailed['longestStreak'][i]));
+      data_detailed_percentTimeMoving.push(parseInt(data_detailed['percentTimeMoving'][i]));
+      data_detailed_playerCount.push(parseInt(data_detailed['playerCount'][i]));
+      if (data_detailed['mode'][i].length > 10) {
+        data_detailed_mode.push('rebirth');
+      } else {
+        data_detailed_mode.push(data_detailed['mode'][i].slice(5,));
+      }
+    }
+    // create table 
+    for (let i = 0; i < 10; i++) {
+      var tempRow = document.createElement('tr');
+      // add cells and data to row
+      var tempCell = document.createElement('td');
+      tempCell.innerHTML = data_detailed_teamPlacement[i];
+      tempCell.classList.add('detailed_data');
+      tempRow.appendChild(tempCell);
+
+      var tempCell = document.createElement('td');
+      tempCell.innerHTML = data_detailed_kills[i];
+      tempCell.classList.add('detailed_data');
+      tempRow.appendChild(tempCell);
+      var tempCell = document.createElement('td');
+      tempCell.innerHTML = data_detailed_mode[i];
+      tempCell.classList.add('detailed_data');
+      tempRow.appendChild(tempCell);
+
+      // add row to table
+      // if 1st: gold - if 2nd: silver - if 3rd: brown
+      if (tempRow.children[0].innerHTML == 1) { // 1st place
+        for (let i = 0; i < 3; i++) {
+          var cell = tempRow.children[i];
+          cell.classList.add('top_placed');
+          if (i == 0) { // left cell
+            cell.style.background = 'linear-gradient(to right, rgba(255,255,255,0.7), 1%, gold)';
+            cell.style.boxShadow = '2px 2px .4em 2px gold';
+            cell.style.color = '#1b1b1b';
+            cell.style.borderTopLeftRadius = '1px';
+            cell.style.borderBottomLeftRadius = '1px';
+          } else if (i == 1) { // middle cell
+            cell.style.background = 'gold';
+            cell.style.boxShadow = '2px 2px .4em 2px gold';
+            cell.style.color = '#1b1b1b';
+          } else { // third cell
+            cell.style.background = 'linear-gradient(to left, rgba(255,255,255,0.7), 1%, gold)';
+            cell.style.boxShadow = '2px 2px .4em 2px gold';
+            cell.style.color = '#1b1b1b';
+            cell.style.borderTopRightRadius = '1px';
+            cell.style.borderBottomRightRadius = '1px';
+          }
+        }
+      }
+
+      if (tempRow.children[0].innerHTML == 2) { // 2nd place
+        for (let i = 0; i < 3; i++) {
+          var cell = tempRow.children[i];
+          cell.classList.add('top_placed');
+          if (i == 0) { // left cell
+            cell.style.background = 'linear-gradient(to right, rgba(255,255,255,0.7), 1%, lightblue)';
+            cell.style.boxShadow = '2px 2px .4em 2px lightblue';
+            cell.style.color = '#1b1b1b';
+            cell.style.borderTopLeftRadius = '1px';
+            cell.style.borderBottomLeftRadius = '1px';
+          } else if (i == 1) { // middle cell
+            cell.style.background = 'lightblue';
+            cell.style.boxShadow = '2px 2px .4em 2px lightblue';
+            cell.style.color = '#1b1b1b';
+          } else { // third cell
+            cell.style.background = 'linear-gradient(to left, rgba(255,255,255,0.7), 1%, lightblue)';
+            cell.style.boxShadow = '2px 2px .4em 2px lightblue';
+            cell.style.color = '#1b1b1b';
+            cell.style.borderTopRightRadius = '1px';
+            cell.style.borderBottomRightRadius = '1px';
+          }
+        }
+      }
+
+      if (tempRow.children[0].innerHTML == 3) { // 3rd place
+        for (let i = 0; i < 3; i++) {
+          var cell = tempRow.children[i];
+          cell.classList.add('top_placed');
+          if (i == 0) { // left cell
+            cell.style.background = 'linear-gradient(to right, rgba(255,255,255,0.7), 1%, #CD7218)';
+            cell.style.boxShadow = '2px 2px .4em 2px #CD7218';
+            cell.style.color = '#1b1b1b';
+            cell.style.borderTopLeftRadius = '1px';
+            cell.style.borderBottomLeftRadius = '1px';
+          } else if (i == 1) { // middle cell
+            cell.style.background = '#CD7218';
+            cell.style.boxShadow = '2px 2px .4em 2px #CD7218';
+            cell.style.color = '#1b1b1b';
+          } else { // third cell
+            cell.style.background = 'linear-gradient(to left, rgba(255,255,255,0.7), 1%, #CD7218)';
+            cell.style.boxShadow = '2px 2px .4em 2px #CD7218';
+            cell.style.color = '#1b1b1b';
+            cell.style.borderTopRightRadius = '1px';
+            cell.style.borderBottomRightRadius = '1px';
+          }
+        }
+      }
+      detailed_table.appendChild(tempRow);
+    }
+
+
+
+
+
+    // DISPLAY INTERACTIVE TABLES
+    var kills = {
+    x: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+    y: data_detailed_kills,
+    name: 'Kills',
+    type: 'line',
+    fill: 'tozeroy',
+      textposition: 'auto',
+      hoverinfo: 'none',
+      marker: {
+        color: '#FF0000',
+        line: {
+          color: 'white',
+          width: 0
+        }
+      }
+    };
+
+    var deaths = {
+    x: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+    y: data_detailed_deaths,
+    name: 'Deaths',
+    type: 'line',
+    fill: 'tozeroy',
+    fillcolor: 'rgba(27,27,27,1)',
+      textposition: 'auto',
+      hoverinfo: 'none',
+      opacity: 1,
+      marker: {
+        color: 'white', /* inside */
+        line: {
+          color: 'white', /* border */
+          width: 0
+        }
+      }
+    };
+
+    var layout = {
+      barmode: 'overlay',
+      showlegend: true,
+      legend: {
+        orientation: 'h',
+        x: 0.27,
+        y: 1.08,
+        bgcolor: 'rgba(0,0,0,0)'
+      },
+      title: {
+        text:'Killing Track Record',
+        font: {
+          size: 24,
+          color: 'white'
+        },
+        xref: 'paper',
+      },
+      xaxis: {
+        showgrid: false,
+        title: {
+          text: 'Games Last Played',
+          font: {
+            size: 20,
+            color: 'white'
+          }
+        },
+      },
+      yaxis: {
+        showgrid: false,
+        title: {
+          text: '',
+          font: {
+            size: 20,
+            color: 'white'
+          }
+        },
+      },
+      font: {
+        family: 'Staatliches, cursive',
+        color: 'white'
+      },
+      margin: {
+        l: 50,
+        r: 50,
+        b: 50,
+        t: 50,
+        pad: 4
+      },
+      plot_bgcolor:"#1b1b1b",
+      paper_bgcolor:"#1b1b1b",
+    };
+
+    Plotly.newPlot('plot1', [kills, deaths], layout, {staticPlot: true});
+
+
+
+
+    /* graph plot2 */
+    var movement = {
+    x: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+    y: data_detailed_percentTimeMoving,
+    name: '% Time Moving',
+    fill: 'tozeroy',
+    fillcolor: 'rgba(255,223,0,0.6)',
+    type: 'line',
+      textposition: 'auto',
+      hoverinfo: 'none',
+      opacity: 1,
+      marker: {
+        color: 'rgb(255,223,0)',
+        line: {
+          color: 'white',
+          width: 0
+        }
+      }
+    };
+
+    var placement = {
+    x: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
+    y: data_detailed_teamPlacement,
+    name: 'Placement',
+    fill: 'tozeroy',
+    type: 'line',
+      textposition: 'auto',
+      hoverinfo: 'none',
+      opacity: 1,
+      marker: {
+        color: 'white', /* inside */
+        line: {
+          color: 'white', /* border */
+          width: 0
+        }
+      }
+    };
+
+    var layout = {
+      barmode: 'overlay',
+      showlegend: true,
+      legend: {
+        orientation: 'h',
+        x: 0.17,
+        y: 1.08,
+        bgcolor: 'rgba(0,0,0,0)'
+      },
+      title: {
+        text:'Playstyle Trend',
+        font: {
+          size: 24,
+          color: 'white'
+        },
+        xref: 'paper',
+      },
+      xaxis: {
+        showgrid: false,
+        title: {
+          text: 'Games Last Played',
+          font: {
+            size: 20,
+            color: 'white'
+          }
+        },
+      },
+      yaxis: {
+        showgrid: false,
+        title: {
+          text: '',
+          font: {
+            size: 20,
+            color: 'white'
+          }
+        },
+      },
+      font: {
+        family: 'Staatliches, cursive',
+        color: 'white'
+      },
+      margin: {
+        l: 50,
+        r: 50,
+        b: 50,
+        t: 50,
+        pad: 4
+      },
+      plot_bgcolor:"#1b1b1b",
+      paper_bgcolor:"#1b1b1b",
+    };
+
+    Plotly.newPlot('plot2', [movement, placement], layout, {staticPlot: true});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+    /*                  CSS STLYING BELOW                 */
+
+
+
+
+
+
+
+    /* DASHBOARD STYLING */
+    /*** CSS STYLING ***/
+    /* LIFETIME TABLE */
+    let lifetime_table_rows = lifetime_table.rows;
+    for (let i = 0; i < lifetime_table_rows.length; i++) {
+      for (let j = 0; j < lifetime_table_rows[i].cells.length; j++) {
+        lifetime_table_rows[i].cells[j].onmouseover = function() {
+          var number = lifetime_table_rows[i].cells[j].children[2];
+          number.style.color = '#FF5A5D';
+          number.style.transition = '0.5s';
+          var cell = lifetime_table_rows[i].cells[j];
+          cell.style['transform'] = 'scale(1.1,1.1)';
+          cell.style['-webkit-transform'] = 'scale(1.1,1.1)';
+          cell.style['-moz-transform'] = 'scale(1.1,1.1)';
+          cell.style.transition = '0.5s';
+        }
+        lifetime_table_rows[i].cells[j].onmouseleave = function() {
+          var number = lifetime_table_rows[i].cells[j].children[2];
+          number.style.color = 'white';
+          number.style.transition = '0.5s';
+          var cell = lifetime_table_rows[i].cells[j];
+          cell.style['transform'] = 'scale(1.0,1.0)';
+          cell.style['-webkit-transform'] = 'scale(1.0,1.0)';
+          cell.style['-moz-transform'] = 'scale(1.0,1.0)';
+          cell.style.transition = '0.5s';
+        }
+      }
+    }
+
+    lifetime_table.onmouseover = function() {
+      lifetime_table.style.border = '3px solid white';
+      lifetime_table.style.boxShadow = '3px 3px .6em 3px white';
+      lifetime_table.style.background = 'radial-gradient(#700, #121212)';
+      lifetime_table.style.backgroundOrigin = 'border-box';
+      lifetime_table.style.backgroundClip = 'content-box, border-box';
+      lifetime_table.style.transition = '1s';
+      lifetime_table_caption.style['transform'] = 'scale(1.1,1.1)';
+      lifetime_table_caption.style['-webkit-transform'] = 'scale(1.1,1.1)';
+      lifetime_table_caption.style['-moz-transform'] = 'scale(1.1,1.1)';
+      lifetime_table_caption.style.transition = '0.5s';
+    }
+
+    lifetime_table.onmouseleave = function() {
+      lifetime_table.style.border = '3px solid rgba(255,37,41,0.8)';
+      lifetime_table.style.boxShadow = '3px 1px .6em 7px #400';
+      lifetime_table.style.background = 'radial-gradient(#400, #121212)';
+      lifetime_table.style.backgroundOrigin = 'border-box';
+      lifetime_table.style.backgroundClip = 'content-box, border-box';
+      lifetime_table.style.transition = '1s';
+      lifetime_table_caption.style['transform'] = 'scale(1.0,1.0)';
+      lifetime_table_caption.style['-webkit-transform'] = 'scale(1.0,1.0)';
+      lifetime_table_caption.style['-moz-transform'] = 'scale(1.0,1.0)';
+      lifetime_table_caption.style.transition = '0.5s';
+    }
+
+
+    /* WEEKLY TABLE */
+    let weekly_table_rows = weekly_table.rows;
+    for (let i = 0; i < weekly_table_rows.length; i++) {
+      for (let j = 0; j < weekly_table_rows[i].cells.length; j++) {
+        weekly_table_rows[i].cells[j].onmouseover = function() {
+          weekly_table_rows[i].cells[j].children[2].style.color = '#F7EB93';
+          weekly_table_rows[i].cells[j].children[2].style.transition = '0.5s';
+          var cell = weekly_table_rows[i].cells[j];
+          cell.style['transform'] = 'scale(1.1,1.1)';
+          cell.style['-webkit-transform'] = 'scale(1.1,1.1)';
+          cell.style['-moz-transform'] = 'scale(1.1,1.1)';
+          cell.style.transition = '0.5s';
+        }
+        weekly_table_rows[i].cells[j].onmouseleave = function() {
+          weekly_table_rows[i].cells[j].children[2].style.color = 'white';
+          weekly_table_rows[i].cells[j].children[2].style.transition = '0.5s';
+          var cell = weekly_table_rows[i].cells[j];
+          cell.style['transform'] = 'scale(1.0,1.0)';
+          cell.style['-webkit-transform'] = 'scale(1.0,1.0)';
+          cell.style['-moz-transform'] = 'scale(1.0,1.0)';
+          cell.style.transition = '0.5s';
+        }
+      }
+    }
+
+    weekly_table.onmouseover = function() {
+      weekly_table.style.border = '3px solid white';
+      weekly_table.style.boxShadow = '3px 3px .6em 3px white';
+      weekly_table.style.background = 'radial-gradient(#C0A900, #121212)';
+      weekly_table.style.backgroundOrigin = 'border-box';
+      weekly_table.style.backgroundClip = 'content-box, border-box';
+      weekly_table.style.transition = '1s';
+      weekly_table_caption.style['transform'] = 'scale(1.1,1.1)';
+      weekly_table_caption.style['-webkit-transform'] = 'scale(1.1,1.1)';
+      weekly_table_caption.style['-moz-transform'] = 'scale(1.1,1.1)';
+      weekly_table_caption.style.transition = '0.5s';
+    }
+
+    weekly_table.onmouseleave = function() {
+      weekly_table.style.border = '3px solid rgba(255,223,0,0.8)';
+      weekly_table.style.boxShadow = '3px 3px .6em 2px #A59100';
+      weekly_table.style.background = 'radial-gradient(#A59100, #121212)';
+      weekly_table.style.backgroundOrigin = 'border-box';
+      weekly_table.style.backgroundClip = 'content-box, border-box';
+      weekly_table.style.transition = '1s';
+      weekly_table_caption.style['transform'] = 'scale(1.0,1.0)';
+      weekly_table_caption.style['-webkit-transform'] = 'scale(1.0,1.0)';
+      weekly_table_caption.style['-moz-transform'] = 'scale(1.0,1.0)';
+      weekly_table_caption.style.transition = '0.5s';
+    }
+
+
+    /* DETAILED TABLE */
+    let detailed_table_rows = detailed_table.rows;
+    for (let i = 1; i < detailed_table_rows.length; i++) {
+      detailed_table_rows[i].onmouseover = function() {
+        for (let j = 0; j < detailed_table_rows[i].children.length; j++) {
+          var cell = detailed_table_rows[i].children[j];
+          if (!cell.classList.contains('top_placed')) { // if not top 10
+            cell.style.color = '#7553FF';
+            cell.style.transition = '0.2s';
+          }
+        }
+        for (let j = 0; j < detailed_table_heading.children.length; j++) {
+          var cell = detailed_table_heading.children[j];
+          cell.style['transform'] = 'scale(1.1,1.1)';
+          cell.style['-webkit-transform'] = 'scale(1.1,1.1)';
+          cell.style['-moz-transform'] = 'scale(1.1,1.1)';
+          cell.style.transition = '0.5s';
+        }
+      }
+
+      detailed_table_rows[i].onmouseleave = function() {
+        for (let j = 0; j < detailed_table_rows[i].children.length; j++) {
+          var cell = detailed_table_rows[i].children[j];
+          if (!cell.classList.contains('top_placed')) { // if not top 10
+            cell.style.color = 'white';
+            cell.style.transition = '0.2s';
+          }
+        }
+        for (let j = 0; j < detailed_table_heading.children.length; j++) {
+          var cell = detailed_table_heading.children[j];
+          cell.style['transform'] = 'scale(1.0,1.0)';
+          cell.style['-webkit-transform'] = 'scale(1.0,1.0)';
+          cell.style['-moz-transform'] = 'scale(1.0,1.0)';
+          cell.style.transition = '0.5s';
+        }
+      }
+    }
+
+    detailed_table.onmouseover = function() {
+      detailed_table.style.border = '3px solid #CCC';
+      detailed_table.style.boxShadow = '3px 3px .6em 3px #CCC';
+      detailed_table.style.background = 'radial-gradient(#1b1b1b, #121212)';
+      detailed_table.style.backgroundOrigin = 'border-box';
+      detailed_table.style.backgroundClip = 'content-box, border-box';
+      detailed_table.style.transition = '1s';
+      detailed_table_caption.style['transform'] = 'scale(1.1,1.1)';
+      detailed_table_caption.style['-webkit-transform'] = 'scale(1.1,1.1)';
+      detailed_table_caption.style['-moz-transform'] = 'scale(1.1,1.1)';
+      detailed_table_caption.style.transition = '0.5s';
+    }
+
+    detailed_table.onmouseleave = function() {
+      detailed_table.style.border = '3px solid white';
+      detailed_table.style.boxShadow = '3px 3px .6em 2px white';
+      detailed_table.style.background = 'radial-gradient(#1b1b1b, #121212)';
+      detailed_table.style.backgroundOrigin = 'border-box';
+      detailed_table.style.backgroundClip = 'content-box, border-box';
+      detailed_table.style.transition = '1s';
+      detailed_table_caption.style['transform'] = 'scale(1.0,1.0)';
+      detailed_table_caption.style['-webkit-transform'] = 'scale(1.0,1.0)';
+      detailed_table_caption.style['-moz-transform'] = 'scale(1.0,1.0)';
+      detailed_table_caption.style.transition = '0.5s';
+    }
+
+
+
+    /* PLOTLY PLOTS */
+    plot1.onmouseover = function() {
+      plot1.style.border = '3px solid rgba(255,27,31,0.8)';
+      plot1.style.boxShadow = '3px 1px .6em 7px #400';
+      plot1.style.background = 'radial-gradient(#400, #121212)';
+      plot1.style.backgroundOrigin = 'border-box';
+      plot1.style.backgroundClip = 'content-box, border-box';
+      plot1.style.transition = '1s';
+    }
+
+    plot1.onmouseleave = function() {
+      plot1.style.border = '3px solid white';
+      plot1.style.boxShadow = '3px 3px .6em 2px white';
+      plot1.style.background = 'radial-gradient(#1b1b1b, #121212)';
+      v.style.backgroundOrigin = 'border-box';
+      plot1.style.backgroundClip = 'content-box, border-box';
+      plot1.style.transition = '1s';
+    }
+
+
+    plot2.onmouseover = function() {
+      plot2.style.border = '3px solid rgba(255,223,0,0.8)';
+      plot2.style.boxShadow = '3px 3px .6em 3px #A59100';
+      plot2.style.background = 'radial-gradient(#A59100, #121212)';
+      plot2.style.backgroundOrigin = 'border-box';
+      plot2.style.backgroundClip = 'content-box, border-box';
+      plot2.style.transition = '1s';
+    }
+
+    plot2.onmouseleave = function() {
+      plot2.style.border = '3px solid white';
+      plot2.style.boxShadow = '3px 3px .6em 2px white';
+      plot2.style.background = 'radial-gradient(#1b1b1b, #121212)';
+      plot2.style.backgroundOrigin = 'border-box';
+      plot2.style.backgroundClip = 'content-box, border-box';
+      plot2.style.transition = '1s';
+    }
+
+
+    plot_container.onmouseover = function() {
+      plot_container_caption.style['transform'] = 'scale(1.1,1.1)';
+      plot_container_caption.style['-webkit-transform'] = 'scale(1.1,1.1)';
+      plot_container_caption.style['-moz-transform'] = 'scale(1.1,1.1)';
+      plot_container_caption.style.transition = '0.5s';
+    }
+
+    plot_container.onmouseleave = function() {
+      plot_container_caption.style['transform'] = 'scale(1.0,1.0)';
+      plot_container_caption.style['-webkit-transform'] = 'scale(1.0,1.0)';
+      plot_container_caption.style['-moz-transform'] = 'scale(1.0,1.0)';
+      plot_container_caption.style.transition = '0.5s';
+    }
+
+  } // end of Success! (<-- build all dashboard stuff inside of this)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  /*** ERROR MESSAGE ***/
+  if (error_message_from_flask.innerHTML == 'error') {
+    error_message.classList.remove('hidden');
+  }
+
+
+  /*** MENU PANEL ***/
+  /* platform updating and hovering */
+  for (let i = 0; i < icons.length; i++) {
+
+    icons[i].onmouseover = function(event) {
+      let hoveredIcon = document.querySelector('.hovered');
+      if (hoveredIcon) {
+        hoveredIcon.classList.remove('hovered');
+      }
+      event.currentTarget.classList.add('hovered');
+    }
+
+    icons[i].onmouseout = function(event) {
+      let hoveredIcon = document.querySelector('.hovered');
+      hoveredIcon.classList.remove('hovered');
+    }
+
+    icons[i].onclick = function(event) {
+      // enable gamertag input
+      gamertag.removeAttribute('disabled');
+      gamertag.value='';
+
+      let currentIcon = document.querySelector('.clicked');
+      if (currentIcon) {
+        currentIcon.classList.remove('clicked');
+      }
+      event.currentTarget.classList.add('clicked');
+      gamertag.style.color = 'rgba(125,125,125,0.7)';
+
+      // change gamertag input
+      let platform = icons[i].name;
+      if (platform== 'battle') {
+        inside = 'Enter Battle.net Username';
+        //gamertag.value = inside;
+        gamertag.placeholder = inside;
+      }
+      else if (platform == 'psn') {
+        inside = 'Enter PlayStation Network Username';
+        //gamertag.value = inside;
+        gamertag.placeholder = inside;
+      }
+      else if (platform == 'xbl') {
+        inside = 'Enter Xbox Live Username';
+        //gamertag.value = inside;
+        gamertag.placeholder = inside;
+
+      }
+      else if (platform == 'acti') {
+        inside = 'Enter Activision ID Username';
+        //gamertag.value = inside;
+        gamertag.placeholder = inside;
+      }
+    }
+  }
+
+  /* gamertag input */
+  gamertag.onclick = function(event) {
+    gamertag.style.color = 'black';
+
+  }
+
+  /* redirect page with params when button submits */
+  submit_button.onclick = function(event) {
+
+    // redirect url
+    var data = new URLSearchParams();
+    var there = false;
+    for (let i = 0; i < icons.length; i++) {
+
+      if (icons[i].classList.contains('clicked')) {
+        there=true;
+        data.append("platform", icons[i].name);
+      }
+    }
+
+    // update data attributes accordingly
+    if (there == false) {
+      data.append("platform", 'missing');
+    }
+    if ((gamertag.value == 'Select Platform') || (gamertag.value == 'Enter Battle.net Username') || (gamertag.value == 'Enter PlayStation Network Username') || (gamertag.value == 'Enter Xbox Live Username') || (gamertag.value == 'Enter Activision ID Username')) {
+      data.append("gamertag", 'missing');
+    } else {
+      data.append("gamertag", gamertag.value);
+    }
+
+    //location.href = "form.html?"+data.toString();
+    location.href = "?"+data.toString();
+  }
+
+
+</script>
+{% endblock %}
+
