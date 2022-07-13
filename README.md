@@ -109,6 +109,6 @@ http://michaelpoma.pythonanywhere.com/?platform=battle&gamertag=kawaguy90%231610
 
 ## Screenshots
 
-![Home Page](/home_page_ss.png?raw=true "Home Page" | width=45%)
-![Dashboard](/dashboard_ss.png?raw=true "Dashboard" | width=45%)
+![Home Page](/home_page_ss.png?raw=true "Home Page" | width=45px)
+![Dashboard](/dashboard_ss.png?raw=true "Dashboard" | width=45px)
 
