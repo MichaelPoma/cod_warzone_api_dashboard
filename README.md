@@ -4,10 +4,11 @@
 
 <h3 align="center"><a href="http://MichaelPoma.PythonAnywhere.com" target="_blank"><b>MichaelPoma.PythonAnywhere.com</b></a><h3>
 
+<p>
 - Developed interactive, real-time dashboard of lifetime, weekly, and recent game data for Warzone players
 - Retrieved statistics from Call of Duty API based on user gamertag and platform with data validation
 - Publically available for current, past, and future Call of Duty: Warzone players
-- Deployed web app via Flask for continuous uptime and availability
+- Deployed web app via Flask for continuous uptime and availability</p>
 
 
 ## Code and Resources Used
