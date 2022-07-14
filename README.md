@@ -1,14 +1,16 @@
 
 # Call of Duty: Warzone API Player Dashboard
 
-<a align="center" href="MichaelPoma.PythonAnywhere.com" target="_blank">MichaelPoma.PythonAnywhere.com</a>
+
+[Warzone Dashboard](MichaelPoma.PythonAnywhere.com)
 
 - Developed interactive, real-time dashboard of lifetime, weekly, and recent game data for Warzone players
 - Retrieved statistics from Call of Duty API based on user gamertag and platform with data validation
 - Publically available for current, past, and future Call of Duty: Warzone players
 - Deployed web app via Flask for continuous uptime and availability
-## Code and Resources Used
 
+
+## Code and Resources Used
 
 **Languages:** Python, JavaScript, HTML, CSS
 
@@ -17,6 +19,7 @@
 **Packages:** flask, requests, json, pandas, numpy, matplotlib, time, datetime, io, base64, plotly
 
 **Host API Link:** https://rapidapi.com/elreco/api/call-of-duty-modern-warfare/
+
 ## Data Collection
 
 The data was collected via RapidAPI's Call of Duty: Modern Warefare API in 3 API calls.
