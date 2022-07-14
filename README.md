@@ -2,7 +2,7 @@
 # Call of Duty: Warzone API Player Dashboard
 
 
-<h3 align="center">MichaelPoma.PythonAnywhere.com</h3>
+<h3 align="center"><a href="http://MichaelPoma.PythonAnywhere.com" target="_blank"><b>MichaelPoma.PythonAnywhere.com</b></a><h3>
 
 - Developed interactive, real-time dashboard of lifetime, weekly, and recent game data for Warzone players
 - Retrieved statistics from Call of Duty API based on user gamertag and platform with data validation
