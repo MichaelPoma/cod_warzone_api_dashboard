@@ -8,6 +8,11 @@
 - Publically available for current, past, and future Call of Duty: Warzone players
 - Deployed web app via Flask for continuous uptime and availability
 
+## Demo Dashboard
+<p align="center">
+    <img alt="Dashboard" src="dashboard_ss.png" width="95%">
+</p>
+
 
 ## Code and Resources Used
 
@@ -111,9 +116,8 @@ http://michaelpoma.pythonanywhere.com/?platform=battle&gamertag=kawaguy90%231610
 ```
 
 
-## Screenshots
+## Landing Page
 
 <p align="center">
-  <img alt="Home Page" src="home_page_ss.png" width="48%" display="inline-block">
-  <img alt="Dashboard" src="dashboard_ss.png" width="48%" display="inline-block">
+  <img alt="Home Page" src="home_page_ss.png" width="95%" display="inline-block">
 </p>
