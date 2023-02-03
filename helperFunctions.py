@@ -11,10 +11,9 @@ import base64
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
-
-# https://rapidapi.com/elreco/api/call-of-duty-modern-warfare/
-
-
+#import plotly
+#import plotly.express as px
+#import sys
 
 # # # # # # # # # # # # # # # # # # # # # # # # #
 # Function: Convert date to readible variables  #
@@ -75,6 +74,12 @@ def getData20Games(platform, gamertag):
         except:
             pass
 
+        # # # # # # # #
+        #     NEW     #
+        # # # # # # # #
+        # data --> data['data']
+        data = data['data']
+
         # Retrieve data
         # Most recent game map and mode
         most_recent_map = data['matches'][0]['map']
@@ -129,13 +134,16 @@ def getData20Games(platform, gamertag):
             hour_list.append(convertDate(match['utcStartSeconds'])[4]) # hour
             minute_list.append(convertDate(match['utcStartSeconds'])[5]) # minute
             period_list.append(convertDate(match['utcStartSeconds'])[6]) # AM or PM
-            
-            for contract in match['player']['brMissionStats']['missionStatsByType']:
-                contractsComplete_list.append(contract) # contracts completed
-            numContractsComplete_list.append(match['player']['brMissionStats']['missionsComplete']) # number of contracts completed
-                
+
+
+            ### NEW ###
+            #for contract in match['player']['brMissionStats']['missionStatsByType']:
+                #contractsComplete_list.append(contract) # contracts completed
+            #numContractsComplete_list.append(match['player']['brMissionStats']['missionsComplete']) # number of contracts completed
+
 
         # Store into dataframes
+        # Contract now unsupported by API
         df_20games_summary = pd.DataFrame({"kills":[summary_kills],
                                             "kdRatio":[summary_kdRatio],
                                             "killsPerGame":[summary_killsPerGame],
@@ -151,7 +159,6 @@ def getData20Games(platform, gamertag):
                                             "longestStreak": longestStreak_list,
                                             "teamPlacement": teamPlacement_list,
                                             "mode": mode_list,
-                                            "numContractsComplete": numContractsComplete_list,
                                             "dayOfWeek": dayOfWeek_list,
                                             "month": month_list,
                                             "day": day_list,
@@ -186,29 +193,37 @@ def getDataLifetime(platform, gamertag):
         except:
             pass
 
+        # # # # # # # #
+        #     NEW     #
+        # # # # # # # #
+        # data --> data['data']['lifetime']['mode']['br']['properties']
+        # Remove BR indices
+        data = data['data']['lifetime']['mode']['br']['properties']
+        #
+
         # Retrieve data
-        lifetime_gamesPlayed = int(data['br']['gamesPlayed'])
-        lifetime_timePlayed = int(data['br']['timePlayed'])
+        lifetime_gamesPlayed = int(data['gamesPlayed'])
+        lifetime_timePlayed = int(data['timePlayed'])
 
         # row 1
-        lifetime_wins = int(data['br']['wins'])
+        lifetime_wins = int(data['wins'])
         lifetime_winPercentage = round(lifetime_wins / lifetime_gamesPlayed * 100,2)
         lifetime_daysPlayed = int(lifetime_timePlayed / 3600 / 24)
         lifetime_hoursPlayed = int(((lifetime_timePlayed / 3600 / 24) - lifetime_daysPlayed) * 24)
         lifetime_minutesPlayed = int(((((lifetime_timePlayed / 3600 / 24) - lifetime_daysPlayed) * 24) - lifetime_hoursPlayed) * 60)
 
         # row 2
-        lifetime_kills = int(data['br']['kills'])
-        lifetime_deaths = data['br']['deaths']
+        lifetime_kills = int(data['kills'])
+        lifetime_deaths = data['deaths']
         lifetime_killsPerGame = int(lifetime_kills / lifetime_gamesPlayed)
-        lifetime_kdRatio = round(data['br']['kdRatio'],2)
+        lifetime_kdRatio = round(data['kdRatio'],2)
 
         # extra info if needed
-        lifetime_downs = data['br']['downs']
-        lifetime_topTwentyFive = data['br']['topTwentyFive']
-        lifetime_topTen = data['br']['topTen']
-        lifetime_topFive = data['br']['topFive']
-        lifetime_revives = data['br']['revives']
+        lifetime_downs = data['downs']
+        lifetime_topTwentyFive = data['topTwentyFive']
+        lifetime_topTen = data['topTen']
+        lifetime_topFive = data['topFive']
+        lifetime_revives = data['revives']
 
         # Store into dataframe
         df_lifetime = pd.DataFrame({"wins":[lifetime_wins],
@@ -236,9 +251,10 @@ def getDataLifetime(platform, gamertag):
 # # # # # # # # # # # # # # # # # # # # # # # #
 # Function: Retrieve API data of weekly stats #
 # # # # # # # # # # # # # # # # # # # # # # # #
+# Using most recent 20 games! (Weekly stats is unsupported now)
 def getDataWeekly(platform, gamertag):
     # Make API call
-    url = "https://call-of-duty-modern-warfare.p.rapidapi.com/weekly-stats/"+gamertag+"/"+platform
+    url = "https://call-of-duty-modern-warfare.p.rapidapi.com/warzone-matches/"+gamertag+"/"+platform
     headers = {
         "X-RapidAPI-Key": "API-KEY",
         "X-RapidAPI-Host": "call-of-duty-modern-warfare.p.rapidapi.com"
@@ -254,33 +270,33 @@ def getDataWeekly(platform, gamertag):
         except:
             pass
 
+        # # # # # # # #
+        #     NEW     #
+        # # # # # # # #
+        # data --> data['data']
+        data = data['data']
+
         # Retrieve data
-        # extra info
-        weekly_timePlayed = int(data['wz']['all']['properties']['timePlayed'])
+        # SUMMARY OF 20 MOST RECENT GAMES DATA - static numbers
+        weekly_kills = int(data['summary']['all']['kills'])
+        weekly_deaths = int(data['summary']['all']['deaths'])
+        weekly_kdRatio = round(data['summary']['all']['kdRatio'],2)
+        weekly_killsPerGame = int(data['summary']['all']['killsPerGame'])
+        weekly_damageDone = int(data['summary']['all']['damageDone'])
+        weekly_damageTaken = int(data['summary']['all']['damageTaken'])
+        weekly_matchesPlayed = int(data['summary']['all']['matchesPlayed'])
+        weekly_hoursPlayed = (int(data['summary']['all']['timePlayed']) / 3600)
 
-        # row 1
-        weekly_kills = int(data['wz']['all']['properties']['kills'])
-        weekly_deaths = int(data['wz']['all']['properties']['deaths'])
-        weekly_kdRatio = data['wz']['all']['properties']['kdRatio']
-        weekly_killsPerGame = int(data['wz']['all']['properties']['killsPerGame'])
-
-        # row 2
-        weekly_damageDone = int(data['wz']['all']['properties']['damageDone'])
-        weekly_damageTaken = int(data['wz']['all']['properties']['damageTaken'])
-
-        # row 3
-        weekly_matchesPlayed = int(data['wz']['all']['properties']['matchesPlayed'])
-        weekly_hoursPlayed = int(weekly_timePlayed / 3600)
-
-        # Store into dataframe
+        # Store into dataframes
         df_weekly = pd.DataFrame({"kills":[weekly_kills],
-                                "deaths":[weekly_deaths],
-                                "kdRatio":[weekly_kdRatio],
-                                "killsPerGame":[weekly_killsPerGame],
-                                "damageDone":[weekly_damageDone],
-                                "damageTaken":[weekly_damageTaken],
-                                "matchesPlayed":[weekly_matchesPlayed],
-                                "hoursPlayed":[weekly_hoursPlayed]})
+                                  "deaths":[weekly_deaths],
+                                  "kdRatio":[weekly_kdRatio],
+                                  "killsPerGame":[weekly_killsPerGame],
+                                  "damageDone":[weekly_damageDone],
+                                  "damageTaken":[weekly_damageTaken],
+                                  "matchesPlayed":[weekly_matchesPlayed],
+                                  "hoursPlayed":[weekly_hoursPlayed]})
+        # temp
         temp = ' '
         return df_weekly, temp
     else:
