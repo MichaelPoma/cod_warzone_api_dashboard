@@ -71,7 +71,7 @@ Two graphs were also developed to display trends of the 20 most recent games:
 #### Get weekly summary statistics
 
 ```http
-  GET /X-RapidAPI-Host/weekly-stats/{gamertag}/{platform}
+  GET /X-RapidAPI-Host/warzone-match/{gamertag}/{platform}
 ```
 
 #### Get recent 20 game data
@@ -121,3 +121,7 @@ http://michaelpoma.pythonanywhere.com/?platform=battle&gamertag=kawaguy90%231610
 <p align="center">
   <img alt="Home Page" src="home_page_ss.png" width="95%" display="inline-block">
 </p>
+
+## 
+
+Due to changes with the host API, application might not always run as intended, as certain changes to API calls and data preprocessing is necessary.
