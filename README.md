@@ -45,8 +45,8 @@ Weekly summary statistics included: (No longer supported)
 - `Time Played`
 
 Two graphs were also developed to display trends of the 20 most recent games:
-- Kills VS Deaths
-- Percent Time Moving VS Team Placement
+- `Kills` VS `Deaths`
+- `Percent Time Moving` VS `Team Placement`
 
 
 ## API Reference
