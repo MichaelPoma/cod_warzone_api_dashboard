@@ -123,7 +123,7 @@ http://michaelpoma.pythonanywhere.com/?platform=battle&gamertag=kawaguy90%231610
 
 ## Monitoring
 
-Due to changes with the host API, application might not always run as intended, as certain changes to API calls and data preprocessing is necessary.
+Due to changes with the host API, application may not always run as intended. Certain changes to API calls and data preprocessing are necessary.
 - Last updated on Feb 2023:
     - Weekly Stats API call no longer supported. Converted to summary of recent 20 games
     - Lifetime and 20 games GET requests updated accordingly due to indexing changes
