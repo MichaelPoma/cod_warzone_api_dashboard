@@ -29,24 +29,26 @@
 The data was collected via RapidAPI's Call of Duty: Modern Warefare API in 3 API calls.
 
 Lifetime summary statistics consisted of the following:
-- Wins, Win Percentage
-- Kills, Kill Death Ratio, Kills Per Game
-- Time Played
-
-Weekly summary statistics included:
-- Kills, Deaths, Kill Death Ratio, Kills Per Game
-- Damage Done
-- Time Played
+- `Wins`, `Win Percentage`
+- `Kills`, `Kill Death Ratio`, `Kills Per Game`
+- `Time Played`
 
 Recent game data included statistics of 20 most recent matches:
-- Team Placement
-- Kills
-- Game Mode
-- Percent Time Moving
+- `Team Placement`
+- `Kills`
+- `Game Mode`
+- `Percent Time Moving`
+
+Weekly summary statistics included: (No longer supported)
+- `Kills`, `Deaths`, `Kill Death Ratio`, `Kills Per Game`
+- `Damage Done`
+- `Time Played`
 
 Two graphs were also developed to display trends of the 20 most recent games:
 - Kills VS Deaths
 - Percent Time Moving VS Team Placement
+
+
 ## API Reference
 
 #### Header Parameters
