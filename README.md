@@ -127,4 +127,3 @@ Due to changes with host API, application may not always run as intended. Certai
 - Last updated on Feb 2023:
     - Weekly Stats API call no longer supported. Converted to summary of recent 20 games
     - Lifetime and 20 games GET requests updated accordingly due to indexing changes
-
